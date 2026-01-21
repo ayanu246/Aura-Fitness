@@ -13,43 +13,69 @@ st.set_page_config(page_title="Aura Health Pro", page_icon="❤️")
 # --- LOGIN GATE ---
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
+if 'user_name' not in st.session_state:
+    st.session_state.user_name = ""
 
 if not st.session_state.logged_in:
-    st.title("🔐 Aura Login")
-    user_input = st.text_input("Enter your Username to Sign In:")
+    st.title("❤️ Aura Health Sign-In")
+    user_input = st.text_input("Enter your Username:")
     if st.button("Sign In"):
         if user_input:
             st.session_state.user_name = user_input
             st.session_state.logged_in = True
             st.rerun()
-        else:
-            st.error("Please enter a name.")
-    st.stop() # Stops the rest of the app from running until logged in
+    st.stop()
 
-# --- APP START (Only runs after login) ---
-
-# Sidebar
+# --- APP AFTER LOGIN ---
 with st.sidebar:
-    st.title(f"Hi, {st.session_state.user_name}!")
+    st.title(f"Welcome, {st.session_state.user_name}")
+    menu = st.radio("Go to:", ["Summary", "Manage Groups", "Trends"])
     if st.button("Sign Out"):
         st.session_state.logged_in = False
         st.rerun()
-    
-    st.divider()
-    menu = st.radio("Menu", ["Summary", "Manage Groups", "Trends"])
 
-# --- TAB 1: SUMMARY (Saves to Database) ---
+# --- TAB 1: SUMMARY ---
 if menu == "Summary":
-    st.title("Today's Stats")
-    
-    # Try to load existing data so it's not empty when you open it
-    existing = supabase.table("aura_collab_tracker").select("*").eq("username", st.session_state.user_name).execute()
-    
-    # Apple Health Cards
+    st.header("Daily Activity")
     col1, col2 = st.columns(2)
     with col1:
-        steps = st.number_input("Steps", min_value=0, step=100)
-        water = st.number_input("Water", min_value=0)
+        steps = st.number_input("Steps Today", min_value=0, step=100)
+        water = st.number_input("Water (Glasses)", min_value=0)
     with col2:
-        sleep = st.number_input("Sleep", min_value=0.0)
-        exercise = st.number_input("Exercise", min_value
+        sleep = st.number_input("Sleep (Hours)", min_value=0.0, step=0.5)
+        exercise = st.number_input("Exercise (Minutes)", min_value=0)
+
+    # Group to save to
+    active_g = st.text_input("Current Group (Default: Solo)", value="Solo")
+
+    if st.button("Sync to Cloud"):
+        data = {
+            "username": st.session_state.user_name,
+            "group_name": active_g,
+            "steps": steps, 
+            "sleep_hours": sleep,
+            "water": water, 
+            "exercise_mins": exercise
+        }
+        # This saves to Supabase so it stays there forever
+        supabase.table("aura_collab_tracker").upsert(data, on_conflict="username,group_name").execute()
+        st.success(f"Successfully saved to {active_g}!")
+
+# --- TAB 2: MANAGE GROUPS ---
+elif menu == "Manage Groups":
+    st.header("Group Management")
+    st.write("Create a group to get a unique invite code.")
+    new_g_name = st.text_input("New Group Name:")
+    if st.button("Create Group"):
+        code = f"{new_g_name.upper()}-{random.randint(1000, 9999)}"
+        st.success(f"Group Created!")
+        st.write("Share this code with your friends:")
+        st.code(code)
+
+# --- TAB 3: TRENDS ---
+elif menu == "Trends":
+    st.header("Community Trends")
+    # THE SELECTOR: View any group you want
+    view_g = st.text_input("Which group leaderboard do you want to see?", value="Solo")
+    
+    res = supabase.table("aura_collab_tracker").select("*").eq
