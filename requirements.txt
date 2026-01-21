@@ -1,5 +1,2 @@
 streamlit
-streamlit-authenticator
-pandas
-plotly
-st-gsheets-connection
+supabase
