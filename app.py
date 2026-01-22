@@ -11,7 +11,7 @@ supabase = create_client(URL, KEY)
 
 st.set_page_config(page_title="Aura Elite", layout="wide")
 
-# --- PRO UI ---
+# --- PRO UI (STRICTLY MAINTAINED) ---
 st.markdown("""
 <style>
     .stApp { background-color: #000000; color: #ffffff; font-family: 'Helvetica Neue', sans-serif; }
@@ -93,34 +93,39 @@ with t2:
 
 with t3:
     st.title("Community Rankings")
-    try:
-        all_g = supabase.table("aura_collab_tracker").select("group_name").execute()
-        g_list = list(set([x['group_name'] for x in all_g.data]))
-    except: g_list = [st.session_state.active_group]
     
-    view_g = st.selectbox("Switch Group View", g_list, index=g_list.index(st.session_state.active_group) if st.session_state.active_group in g_list else 0)
+    # FETCH ONLY REAL GROUPS FROM DB
+    try:
+        all_g_res = supabase.table("aura_collab_tracker").select("group_name").execute()
+        g_list = sorted(list(set([x['group_name'] for x in all_g_res.data])))
+    except:
+        g_list = [st.session_state.active_group]
+    
+    # DROP DOWN TO SELECT VIEW
+    view_g = st.selectbox("View Group Leaderboard", g_list, index=g_list.index(st.session_state.active_group) if st.session_state.active_group in g_list else 0)
+    
+    # FILTER: ONLY SHOW PEOPLE IN THE SELECTED GROUP
     res = supabase.table("aura_collab_tracker").select("*").eq("group_name", view_g).execute()
+    
     if res.data:
         df = pd.DataFrame(res.data).sort_values(by="steps", ascending=False)
         st.dataframe(df[["username", "steps", "exercise_mins"]], use_container_width=True, hide_index=True)
+    else:
+        st.info("No athletes found in this group.")
 
 with t4:
     st.title("Networks")
-    
-    # --- CREATE GROUP FEATURE ---
     st.subheader("Create a New Team")
-    create_name = st.text_input("New Group Name", placeholder="e.g. Varsity-2026")
+    create_name = st.text_input("New Group Name", placeholder="e.g. Ora")
     if st.button("CREATE & JOIN TEAM"):
         if create_name:
             st.session_state.active_group = create_name
             p = {"username": st.session_state.user_name, "group_name": create_name, "steps": st.session_state.steps, "exercise_mins": st.session_state.exercise, "water": st.session_state.water}
             supabase.table("aura_collab_tracker").upsert(p, on_conflict="username,group_name").execute()
-            st.success(f"Created Group: {create_name}")
+            st.success(f"Network Set to: {create_name}")
             st.rerun()
 
     st.write("---")
-
-    # --- JOIN GROUP FEATURE ---
     st.subheader("Join Existing Team")
     join_name = st.text_input("Enter Group Code", placeholder="e.g. Global")
     if st.button("JOIN TEAM"):
@@ -128,5 +133,5 @@ with t4:
             st.session_state.active_group = join_name
             p = {"username": st.session_state.user_name, "group_name": join_name, "steps": st.session_state.steps, "exercise_mins": st.session_state.exercise, "water": st.session_state.water}
             supabase.table("aura_collab_tracker").upsert(p, on_conflict="username,group_name").execute()
-            st.success(f"Joined Group: {join_name}")
+            st.success(f"Joined: {join_name}")
             st.rerun()
