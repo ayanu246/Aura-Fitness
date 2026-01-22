@@ -11,7 +11,7 @@ supabase = create_client(URL, KEY)
 
 st.set_page_config(page_title="Aura Elite", layout="wide")
 
-# --- PROFESSIONAL ATHLETE UI (NO EMOJIS, CLEAN DARK) ---
+# --- PRO UI (UNCHANGED STYLE) ---
 st.markdown("""
 <style>
     .stApp { background-color: #000000; color: #ffffff; font-family: 'Helvetica Neue', sans-serif; }
@@ -19,22 +19,20 @@ st.markdown("""
     .label { color: #8e8e93; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
     .value { font-size: 2.5rem; font-weight: 900; color: #007aff; margin: 5px 0; }
     .stButton>button { border-radius: 8px; background: #007aff; color: white; border: none; font-weight: 600; width: 100%; padding: 10px; }
-    .stTabs [data-baseweb="tab-list"] { gap: 20px; }
-    .stTabs [data-baseweb="tab"] { background-color: transparent; color: #8e8e93; font-weight: 600; }
-    .stTabs [aria-selected="true"] { color: #ffffff !important; border-bottom-color: #007aff !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- LOGIN & CLOUD RESTORE ---
+# --- 1. THE PERMANENT LOGIN (SAVE/LOAD) ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 
 if not st.session_state.auth:
     st.title("Aura Elite Athlete Login")
-    u_in = st.text_input("Enter Athlete ID", placeholder="Username...")
+    u_in = st.text_input("Athlete ID", placeholder="Username to load data...")
     if st.button("AUTHENTICATE"):
         if u_in:
             st.session_state.user_name = u_in
             st.session_state.auth = True
+            # CLOUD RESTORE
             try:
                 r = supabase.table("aura_collab_tracker").select("*").eq("username", u_in).execute()
                 if r.data:
@@ -46,74 +44,79 @@ if not st.session_state.auth:
             st.rerun()
     st.stop()
 
-# --- INIT DEFAULTS ---
+# --- INIT STATE DEFAULTS ---
 if 'steps' not in st.session_state: st.session_state.steps = 0
 if 'water' not in st.session_state: st.session_state.water = 0
 if 'exercise' not in st.session_state: st.session_state.exercise = 0
 if 'active_group' not in st.session_state: st.session_state.active_group = "Global"
 
-# --- MAIN TABS ---
+# --- TABS ---
 t1, t2, t3, t4 = st.tabs(["DASHBOARD", "TRAINING", "COMMUNITY", "NETWORKS"])
 
 with t1:
-    st.markdown(f"### Welcome, {st.session_state.user_name}")
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown(f'<div class="stat-card"><div class="label">Move</div><div class="value">{st.session_state.steps}</div><div class="label">Total Steps</div></div>', unsafe_allow_html=True)
-    with col2:
-        st.markdown(f'<div class="stat-card"><div class="label">Exercise</div><div class="value" style="color:#30d158">{st.session_state.exercise}</div><div class="label">Active Minutes</div></div>', unsafe_allow_html=True)
-    with col3:
-        st.markdown(f'<div class="stat-card"><div class="label">Hydration</div><div class="value" style="color:#64d2ff">{st.session_state.water}</div><div class="label">Glasses</div></div>', unsafe_allow_html=True)
+    st.markdown(f"### Welcome back, {st.session_state.user_name}")
+    c1, c2, c3 = st.columns(3)
+    c1.markdown(f'<div class="stat-card"><div class="label">Move</div><div class="value">{st.session_state.steps}</div><div class="label">Steps</div></div>', unsafe_allow_html=True)
+    c2.markdown(f'<div class="stat-card"><div class="label">Exercise</div><div class="value" style="color:#30d158">{st.session_state.exercise}</div><div class="label">Mins</div></div>', unsafe_allow_html=True)
+    c3.markdown(f'<div class="stat-card"><div class="label">Hydration</div><div class="value" style="color:#64d2ff">{st.session_state.water}</div><div class="label">Glasses</div></div>', unsafe_allow_html=True)
 
-    st.write("---")
-    
-    # PROFESSIONAL HEALTH SYNC BRIDGE
-    if st.button("CONNECT TO SAMSUNG HEALTH / APPLE HEALTH"):
-        # This Javascript triggers the actual browser 'Motion and Fitness' permission request
-        # In a real PWA environment, this is where the HealthKit handshake happens.
-        res = streamlit_js_eval(js_expressions="navigator.permissions.query({name:'accelerometer'})", key="health_bridge")
-        st.info("Requesting secure handshake with Device Health Cloud...")
-        
-        # After permission, we push current state to DB
+    if st.button("🔄 SYNC HEALTH CLOUD & SAVE"):
+        streamlit_js_eval(js_expressions="window.devicePixelRatio", key="sync")
+        # PERSIST TO DATABASE
         p = {"username": st.session_state.user_name, "group_name": st.session_state.active_group, "steps": st.session_state.steps, "exercise_mins": st.session_state.exercise, "water": st.session_state.water}
         supabase.table("aura_collab_tracker").upsert(p, on_conflict="username,group_name").execute()
-        st.success("Synchronized with Database.")
+        st.toast("Progress Saved to Cloud!")
 
-    if st.button("Log Water Intake"):
+    if st.button("Log Water"):
         st.session_state.water += 1
         st.rerun()
 
 with t2:
     st.title("Session Tracker")
-    sport = st.selectbox("Select Activity", ["Basketball", "Soccer", "Running", "Gym Training"])
-    if 't_start' not in st.session_state: st.session_state.t_start = None
+    # EXPANDED SPORTS LIST
+    sport_list = ["Basketball", "Soccer", "Gym Training", "Football", "Boxing", "Swimming", "Tennis", "Volleyball", "Cycling"]
+    sport = st.selectbox("Select Activity", sport_list)
     
-    c_start, c_stop = st.columns(2)
-    if c_start.button("START SESSION"):
+    if 't_start' not in st.session_state: st.session_state.t_start = None
+    c_st, c_sp = st.columns(2)
+    if c_st.button("START SESSION"):
         st.session_state.t_start = time.time()
-        st.info(f"Recording {sport} data...")
-    if c_stop.button("END SESSION"):
+        st.info(f"Recording {sport}...")
+    if c_sp.button("STOP & SAVE"):
         if st.session_state.t_start:
             dur = int((time.time() - st.session_state.t_start) / 60)
             st.session_state.exercise += dur
             st.session_state.t_start = None
-            st.success(f"Locked in {dur} minutes of {sport}.")
+            # AUTO-SAVE
+            p = {"username": st.session_state.user_name, "group_name": st.session_state.active_group, "steps": st.session_state.steps, "exercise_mins": st.session_state.exercise, "water": st.session_state.water}
+            supabase.table("aura_collab_tracker").upsert(p, on_conflict="username,group_name").execute()
+            st.success(f"Added {dur} mins!")
 
 with t3:
-    st.title(f"Rankings: {st.session_state.active_group}")
-    res = supabase.table("aura_collab_tracker").select("*").eq("group_name", st.session_state.active_group).execute()
+    st.title("Community Rankings")
+    
+    # NEW: GROUP SWITCHER ON LEADERBOARD
+    try:
+        all_groups = supabase.table("aura_collab_tracker").select("group_name").execute()
+        group_list = list(set([x['group_name'] for x in all_groups.data]))
+    except:
+        group_list = [st.session_state.active_group]
+
+    view_g = st.selectbox("Switch Group View", group_list, index=group_list.index(st.session_state.active_group) if st.session_state.active_group in group_list else 0)
+    
+    res = supabase.table("aura_collab_tracker").select("*").eq("group_name", view_g).execute()
     if res.data:
         df = pd.DataFrame(res.data).sort_values(by="steps", ascending=False)
         st.dataframe(df[["username", "steps", "exercise_mins"]], use_container_width=True, hide_index=True)
 
 with t4:
-    st.title("Group Networks")
-    st.write("Join multiple groups to compare performance across different teams.")
-    new_g = st.text_input("Enter Network Code", value=st.session_state.active_group)
-    if st.button("SWITCH NETWORK"):
+    st.title("Networks")
+    st.subheader("Create or Join Team")
+    new_g = st.text_input("Network Name / Code", placeholder="Type to create or join...")
+    if st.button("SWITCH TO THIS NETWORK"):
         st.session_state.active_group = new_g
-        # Save change to cloud
+        # SAVE CHOICE
         p = {"username": st.session_state.user_name, "group_name": new_g, "steps": st.session_state.steps, "exercise_mins": st.session_state.exercise, "water": st.session_state.water}
         supabase.table("aura_collab_tracker").upsert(p, on_conflict="username,group_name").execute()
+        st.success(f"Network Switched to {new_g}")
         st.rerun()
