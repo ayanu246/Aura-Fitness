@@ -11,7 +11,7 @@ supabase = create_client(URL, KEY)
 
 st.set_page_config(page_title="Aura Elite", layout="wide")
 
-# --- PRO UI (STRICTLY MAINTAINED) ---
+# --- PRO UI (STRICT DARK THEME) ---
 st.markdown("""
 <style>
     .stApp { background-color: #000000; color: #ffffff; font-family: 'Helvetica Neue', sans-serif; }
@@ -19,15 +19,16 @@ st.markdown("""
     .label { color: #8e8e93; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
     .value { font-size: 2.5rem; font-weight: 900; color: #007aff; margin: 5px 0; }
     .stButton>button { border-radius: 8px; background: #007aff; color: white; border: none; font-weight: 600; width: 100%; padding: 10px; }
+    .stTabs [data-baseweb="tab-list"] { background-color: #000000; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- LOGIN & CLOUD RESTORE ---
+# --- LOGIN & CLOUD RECOVERY ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 
 if not st.session_state.auth:
     st.title("Aura Elite Athlete Login")
-    u_in = st.text_input("Athlete ID", placeholder="Username to load data...")
+    u_in = st.text_input("Athlete ID", placeholder="Enter username...")
     if st.button("AUTHENTICATE"):
         if u_in:
             st.session_state.user_name = u_in
@@ -39,6 +40,9 @@ if not st.session_state.auth:
                     st.session_state.exercise = r.data[0].get('exercise_mins', 0)
                     st.session_state.water = r.data[0].get('water', 0)
                     st.session_state.active_group = r.data[0].get('group_name', 'Global')
+                else:
+                    st.session_state.steps, st.session_state.exercise, st.session_state.water = 0, 0, 0
+                    st.session_state.active_group = "Global"
             except: pass
             st.rerun()
     st.stop()
@@ -57,29 +61,47 @@ with t1:
     c2.markdown(f'<div class="stat-card"><div class="label">Exercise</div><div class="value" style="color:#30d158">{st.session_state.exercise}</div><div class="label">Mins</div></div>', unsafe_allow_html=True)
     c3.markdown(f'<div class="stat-card"><div class="label">Hydration</div><div class="value" style="color:#64d2ff">{st.session_state.water}</div><div class="label">Glasses</div></div>', unsafe_allow_html=True)
 
-    if st.button("🔄 SYNC APPLE / SAMSUNG HEALTH"):
-        st.info("Handshaking with Health Cloud...")
+    # --- THE FIXED HARDWARE SYNC ---
+    if st.button("CONNECT TO HEALTH CLOUD"):
+        st.info("Requesting Permission from Apple/Samsung Health Sensors...")
+        
+        # This updated script forces the DeviceMotion permission popup
         streamlit_js_eval(js_expressions="""
-            DeviceMotionEvent.requestPermission().then(response => {
-                if (response == 'granted') { window.alert('Hardware Sync Active'); }
-            }).catch(console.error)
-        """, key="hardware_ping")
+            (function() {
+                if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                    DeviceMotionEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                window.alert('Health Sensor Access Granted');
+                            } else {
+                                window.alert('Permission Denied. Please enable in Settings.');
+                            }
+                        })
+                        .catch(err => {
+                            window.alert('Manual Access Required: Add this app to your Home Screen first.');
+                        });
+                } else {
+                    window.alert('Health Data Access ready. Ensure app is installed to Home Screen.');
+                }
+            })()
+        """, key="hw_sync_v2")
+        
         p = {"username": st.session_state.user_name, "group_name": st.session_state.active_group, 
              "steps": st.session_state.steps, "exercise_mins": st.session_state.exercise, "water": st.session_state.water}
         supabase.table("aura_collab_tracker").upsert(p, on_conflict="username,group_name").execute()
-        st.toast("Syncing Successful.")
+        st.toast("Progress Saved.")
 
     if st.button("Log Water"):
         st.session_state.water += 1
         st.rerun()
 
 with t2:
-    st.title("Session Tracker")
-    s_list = ["Basketball", "Soccer", "Gym Training", "Football", "Boxing", "Swimming", "Tennis", "Volleyball", "Cycling"]
+    st.title("Training Session")
+    s_list = ["Basketball", "Soccer", "Gym", "Football", "Boxing", "Swimming", "Tennis", "Volleyball", "Cycling"]
     sport = st.selectbox("Select Activity", s_list)
     if 't_start' not in st.session_state: st.session_state.t_start = None
     c_st, c_sp = st.columns(2)
-    if c_st.button("START SESSION"):
+    if c_st.button("START"):
         st.session_state.t_start = time.time()
         st.info(f"Recording {sport}...")
     if c_sp.button("STOP & SAVE"):
@@ -89,49 +111,28 @@ with t2:
             st.session_state.t_start = None
             p = {"username": st.session_state.user_name, "group_name": st.session_state.active_group, "steps": st.session_state.steps, "exercise_mins": st.session_state.exercise, "water": st.session_state.water}
             supabase.table("aura_collab_tracker").upsert(p, on_conflict="username,group_name").execute()
-            st.success(f"Locked in {dur} mins!")
+            st.success(f"Session Saved: {dur} mins")
 
 with t3:
     st.title("Community Rankings")
-    
-    # FETCH ONLY REAL GROUPS FROM DB
     try:
         all_g_res = supabase.table("aura_collab_tracker").select("group_name").execute()
         g_list = sorted(list(set([x['group_name'] for x in all_g_res.data])))
-    except:
-        g_list = [st.session_state.active_group]
-    
-    # DROP DOWN TO SELECT VIEW
-    view_g = st.selectbox("View Group Leaderboard", g_list, index=g_list.index(st.session_state.active_group) if st.session_state.active_group in g_list else 0)
-    
-    # FILTER: ONLY SHOW PEOPLE IN THE SELECTED GROUP
+    except: g_list = [st.session_state.active_group]
+    view_g = st.selectbox("Leaderboard View", g_list, index=g_list.index(st.session_state.active_group) if st.session_state.active_group in g_list else 0)
     res = supabase.table("aura_collab_tracker").select("*").eq("group_name", view_g).execute()
-    
     if res.data:
         df = pd.DataFrame(res.data).sort_values(by="steps", ascending=False)
         st.dataframe(df[["username", "steps", "exercise_mins"]], use_container_width=True, hide_index=True)
-    else:
-        st.info("No athletes found in this group.")
 
 with t4:
     st.title("Networks")
-    st.subheader("Create a New Team")
-    create_name = st.text_input("New Group Name", placeholder="e.g. Ora")
-    if st.button("CREATE & JOIN TEAM"):
-        if create_name:
-            st.session_state.active_group = create_name
-            p = {"username": st.session_state.user_name, "group_name": create_name, "steps": st.session_state.steps, "exercise_mins": st.session_state.exercise, "water": st.session_state.water}
+    st.subheader("Manage Team")
+    new_g = st.text_input("New or Existing Group Name", placeholder="e.g. Ora")
+    if st.button("LOCK IN TEAM"):
+        if new_g:
+            st.session_state.active_group = new_g
+            p = {"username": st.session_state.user_name, "group_name": new_g, "steps": st.session_state.steps, "exercise_mins": st.session_state.exercise, "water": st.session_state.water}
             supabase.table("aura_collab_tracker").upsert(p, on_conflict="username,group_name").execute()
-            st.success(f"Network Set to: {create_name}")
-            st.rerun()
-
-    st.write("---")
-    st.subheader("Join Existing Team")
-    join_name = st.text_input("Enter Group Code", placeholder="e.g. Global")
-    if st.button("JOIN TEAM"):
-        if join_name:
-            st.session_state.active_group = join_name
-            p = {"username": st.session_state.user_name, "group_name": join_name, "steps": st.session_state.steps, "exercise_mins": st.session_state.exercise, "water": st.session_state.water}
-            supabase.table("aura_collab_tracker").upsert(p, on_conflict="username,group_name").execute()
-            st.success(f"Joined: {join_name}")
+            st.success(f"Network Locked: {new_g}")
             st.rerun()
