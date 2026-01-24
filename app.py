@@ -23,7 +23,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 4. AUTHENTICATION & CLOUD RECOVERY ---
+# --- 4. AUTHENTICATION ---
 if 'auth' not in st.session_state: 
     st.session_state.auth = False
 
@@ -45,53 +45,4 @@ if not st.session_state.auth:
                     st.session_state.steps, st.session_state.exercise, st.session_state.water = 0, 0, 0
                     st.session_state.active_group = "Global"
             except:
-                st.session_state.steps, st.session_state.exercise, st.session_state.water = 0, 0, 0
-                st.session_state.active_group = "Global"
-            st.rerun()
-    st.stop()
-
-# --- 5. INITIALIZE STATE ---
-for k, v in {"steps": 0, "water": 0, "exercise": 0, "active_group": "Global"}.items():
-    if k not in st.session_state: st.session_state[k] = v
-
-# --- 6. MAIN NAVIGATION TABS ---
-t1, t2, t3, t4 = st.tabs(["DASHBOARD", "TRAINING", "COMMUNITY", "NETWORKS"])
-
-with t1:
-    st.markdown(f"### Athlete: {st.session_state.user_name}")
-    c1, c2, c3 = st.columns(3)
-    c1.markdown(f'<div class="stat-card"><div class="label">Move</div><div class="value">{st.session_state.steps}</div><div class="label">Steps</div></div>', unsafe_allow_html=True)
-    c2.markdown(f'<div class="stat-card"><div class="label">Exercise</div><div class="value" style="color:#30d158">{st.session_state.exercise}</div><div class="label">Mins</div></div>', unsafe_allow_html=True)
-    c3.markdown(f'<div class="stat-card"><div class="label">Hydration</div><div class="value" style="color:#64d2ff">{st.session_state.water}</div><div class="label">Glasses</div></div>', unsafe_allow_html=True)
-
-    # --- THE HARDWARE SYNC BRIDGE ---
-    if st.button("ACTIVATE CHROME HEALTH BRIDGE"):
-        st.warning("Pinging System Health Sensors...")
-        
-        streamlit_js_eval(js_expressions="""
-            (async () => {
-                try {
-                    if ('Accelerometer' in window) {
-                        const acc = new Accelerometer({frequency: 10});
-                        acc.onerror = (event) => {
-                            if (event.error.name === 'NotAllowedError') {
-                                window.alert('CHROME BLOCKED: Tap the icon next to the URL at the top > Permissions > Allow Motion Sensors.');
-                            }
-                        };
-                        acc.start();
-                        window.alert('Handshake Sent. Sensor detected.');
-                    } 
-                    else if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                        const res = await DeviceMotionEvent.requestPermission();
-                        window.alert('Sensor Access: ' + res);
-                    } else {
-                        window.alert('Please check Chrome Settings > Site Settings > Motion Sensors.');
-                    }
-                } catch (e) {
-                    window.alert('Bridge ready. Use "Add to Home Screen" for best results.');
-                }
-            })()
-        """, key="chrome_sync_final")
-        
-        # Sync Data to Supabase
-        p = {"username": st.session_state.user_name, "group_name": st.session_state.active_group,
+                st.session_state.steps, st.session_state.exercise, st.session_state.water
