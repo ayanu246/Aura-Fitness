@@ -1,127 +1,116 @@
 import streamlit as st
-import random
 import time
 
-# --- PRO TERMINAL CONFIG ---
-st.set_page_config(page_title="AURA CHEF | GLOBAL", page_icon="⚖️", layout="wide")
+# --- AURA CHEF ELITE v5.0 ---
+st.set_page_config(page_title="AURA CHEF | HERITAGE", page_icon="⚖️", layout="wide")
 
-# --- ULTIMATE PROFESSIONAL CSS ---
+# --- ELITE UI STYLING ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+    html, body, [class*="st-"] { font-family: 'Inter', sans-serif; background-color: #050505; color: #fff; }
     
-    html, body, [class*="st-"] { font-family: 'Inter', sans-serif; background-color: #050505; color: #ffffff; }
-    
-    /* Tabs at the Top */
+    /* Top Tab Navigation */
     .stTabs [data-baseweb="tab-list"] { 
-        justify-content: center; gap: 50px; background-color: #000; padding: 20px; border-bottom: 1px solid #222; 
+        justify-content: center; gap: 60px; background-color: #000; padding: 25px; border-bottom: 2px solid #1a1a1a; 
     }
-    .stTabs [data-baseweb="tab"] { 
-        font-size: 0.9rem; font-weight: 700; letter-spacing: 2px; color: #666; transition: 0.4s;
-    }
-    .stTabs [data-baseweb="tab"]:hover { color: #fff; }
-    .stTabs [data-baseweb="tab-highlight"] { background-color: #fff; height: 2px; }
+    .stTabs [data-baseweb="tab"] { font-size: 1rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+    .stTabs [data-baseweb="tab-highlight"] { background-color: #fff; }
 
-    /* Recipe Display */
-    .recipe-output { 
-        background: #0a0a0a; padding: 40px; border-radius: 2px; border: 1px solid #1a1a1a; margin-top: 30px; 
-    }
-    .badge { padding: 4px 12px; font-size: 0.7rem; font-weight: 900; letter-spacing: 1px; border: 1px solid #444; margin-right: 10px; }
+    .recipe-card { background: #0a0a0a; padding: 40px; border: 1px solid #222; border-radius: 4px; margin-top: 20px; }
+    .spice-tag { background: #1a1a1a; color: #fff; padding: 5px 15px; border-radius: 2px; font-size: 0.7rem; font-weight: 800; border: 1px solid #333; margin-right: 5px; }
     
-    .stButton>button {
-        border-radius: 0px; background: #fff; color: #000; font-weight: 900; 
-        border: none; padding: 15px 40px; text-transform: uppercase; letter-spacing: 2px;
-    }
+    .stButton>button { border-radius: 0px; background: #fff; color: #000; font-weight: 900; padding: 15px; width: 100%; border: none; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- GLOBAL NAVIGATION (TOP TABS) ---
-tab1, tab2, tab3, tab4 = st.tabs(["SELECTION OF THE DAY", "PANTRY ENGINE", "RANDOMIZER", "GLOBAL ARCHIVE"])
+# --- NAVIGATION TABS ---
+t1, t2, t3 = st.tabs(["DAILY SIGNATURE", "HERITAGE ENGINE", "TECHNIQUE VAULT"])
 
-# --- TAB 1: SELECTION OF THE DAY ---
-with tab1:
-    st.markdown("<h1 style='text-align: center; letter-spacing: -2px; font-weight: 900;'>SIGNATURE SELECTION</h1>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1,2,1])
-    with col2:
-        st.markdown(f"""
-        <div class="recipe-output" style="text-align: center;">
-            <span class="badge">HALAL</span><span class="badge">TRENDING</span>
-            <h2 style="margin-top:20px;">PAKISTANI CHAPLI BURGER</h2>
-            <p style="color: #888;">A fusion of traditional Peshawar flavors and modern American street food. Served with masala fries and mint chutney aioli.</p>
-            <hr style="border: 0.1px solid #222;">
-            <p style="font-size: 0.8rem; letter-spacing: 1px;">TIME: 35 MINS | DIFFICULTY: INTERMEDIATE</p>
+# --- TAB 1: DAILY SIGNATURE ---
+with t1:
+    st.markdown("<h1 style='text-align: center; font-weight: 900; margin-top:40px;'>AURA SELECTION</h1>", unsafe_allow_html=True)
+    c1, col_mid, c3 = st.columns([1,2,1])
+    with col_mid:
+        st.markdown("""
+        <div class="recipe-card" style="text-align: center;">
+            <p style="color:#888; letter-spacing:2px; font-size:0.7rem;">CHEF'S CHOICE</p>
+            <h2 style="letter-spacing:-1px;">PAKISTANI CHAPLI KEBAB PLATTER</h2>
+            <p style="color:#666;">Hand-crushed pomegranate seeds, dry coriander, and green chili infusion.</p>
         </div>
         """, unsafe_allow_html=True)
+        st.video("https://www.youtube.com/watch?v=6bt0BlYMovE")
 
-# --- TAB 2: PANTRY ENGINE (THE CORE WORK) ---
-with tab2:
-    st.markdown("### PANTRY ENGINE")
-    st.caption("INPUT INGREDIENTS TO FILTER GLOBAL DATABASE")
+# --- TAB 2: HERITAGE ENGINE (THE SPICE SELECTOR) ---
+with t2:
+    st.markdown("### HERITAGE ENGINE")
+    st.caption("INPUT INGREDIENTS AND SELECT YOUR FLAVOR HERITAGE")
     
-    items = st.text_area("LIST ALL AVAILABLE INGREDIENTS", placeholder="Chicken, Soy Sauce, Ginger, Potato, Tortilla...", height=150)
-    
-    # Global Cuisine Logic
-    st.markdown("---")
-    c1, c2, c3, c4, c5 = st.columns(5)
-    pak = c1.checkbox("PAKISTANI")
-    ind = c2.checkbox("INDIAN")
-    mex = c3.checkbox("MEXICAN")
-    asi = c4.checkbox("ASIAN")
-    ame = c5.checkbox("AMERICAN")
+    # Input field (Press Enter to Submit)
+    dish_base = st.text_input("1. WHAT ARE YOU COOKING? (e.g. Chicken, Beef, Rice, Potatoes)", placeholder="Type and press Enter...")
 
-    if st.button("EXECUTE ENGINE"):
-        with st.spinner("SCANNING CULINARY MATRICES..."):
+    if dish_base:
+        st.markdown("---")
+        st.markdown("### 2. SELECT FLAVOR HERITAGE")
+        # The user chooses the style
+        heritage = st.radio("WHICH SPICE PROFILE SHOULD WE APPLY?", 
+                            ["Pakistani", "Indian", "Mexican", "Asian", "American/Western"], 
+                            horizontal=True)
+
+        with st.spinner(f"APPLYING {heritage.upper()} AROMATICS..."):
             time.sleep(1)
-            items_l = items.lower()
             
-            # Dynamic Cuisine Logic
-            if pak or ind:
-                res_title = "Aromatic Karahi Fusion"
-                res_steps = "1. Temper cumin and cardamom in oil. 2. Sauté aromatics. 3. Slow-simmer protein. 4. Finish with fresh ginger."
-            elif mex:
-                res_title = "Street Style Street Tacos"
-                res_steps = "1. Char tortillas. 2. High-heat sear protein. 3. Create lime-acid reduction. 4. Top with fresh cilantro."
-            elif asi:
-                res_title = "Wok-Fired Glaze Stir-fry"
-                res_steps = "1. High-heat wok prep. 2. Flash-fry vegetables. 3. Deglaze with soy/ginger. 4. Serve over steamed base."
-            else:
-                res_title = "Standard Professional Service"
-                res_steps = "1. Mise en place. 2. Pan-sear protein. 3. Deglaze for sauce. 4. Garnish and plate."
+            # SPICE LOGIC DATA
+            spice_data = {
+                "Pakistani": ["Garam Masala", "Kashmiri Red Chili", "Dry Coriander", "Turmeric", "Cumin Seeds"],
+                "Indian": ["Cardamom", "Mustard Seeds", "Curry Leaves", "Saffron", "Fenugreek"],
+                "Mexican": ["Smoked Paprika", "Cumin", "Oregano", "Chipotle Powder", "Ancho Chili"],
+                "Asian": ["Star Anise", "Five Spice", "White Pepper", "Ginger Powder", "Sesame"],
+                "American/Western": ["Garlic Powder", "Onion Powder", "Black Pepper", "Thyme", "Rosemary"]
+            }
 
+            video_links = {
+                "Pakistani": "https://www.youtube.com/watch?v=eqPgJPLRutI",
+                "Indian": "https://www.youtube.com/watch?v=V37Lp5C7V6Q",
+                "Mexican": "https://www.youtube.com/watch?v=Xra45DHI8UE",
+                "Asian": "https://www.youtube.com/watch?v=ry2lNNVz5DM",
+                "American/Western": "https://www.youtube.com/watch?v=ry2lNNVz5DM"
+            }
+
+            spices = spice_data[heritage]
+            
             st.markdown(f"""
-            <div class="recipe-output">
-                <h3 style="color:#fff;">{res_title}</h3>
-                <p style="color:#888;">BASED ON DATA: {items}</p>
-                <hr style="border:0.1px solid #222">
-                <p>{res_steps}</p>
+            <div class="recipe-card">
+                <h2 style="margin-bottom:5px;">{heritage} Style {dish_base}</h2>
+                <div style="margin-bottom:20px;">
+                    {' '.join([f'<span class="spice-tag">{s.upper()}</span>' for s in spices])}
+                </div>
+                <hr style="border:0.1px solid #333">
+                <div style="display: flex; gap: 20px;">
+                    <div style="flex: 2;">
+                        <h4>TECHNICAL STEPS</h4>
+                        <p>1. <b>Bloom:</b> Heat oil and toast your <b>{spices[0]}</b> and <b>{spices[1]}</b> first.</p>
+                        <p>2. <b>Infuse:</b> Add your {dish_base} and allow the heritage aromatics to penetrate the protein.</p>
+                        <p>3. <b>Finish:</b> Season with <b>{spices[-1]}</b> for the final flavor profile.</p>
+                    </div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
+            st.video(video_links[heritage])
 
-# --- TAB 3: RANDOMIZER ---
-with tab3:
-    st.markdown("### CULINARY RANDOMIZER")
-    st.write("DECISION ENGINE FOR UNDETERMINED INPUTS")
+# --- TAB 3: TECHNIQUE VAULT (SEARCH DISH, GET HOW-TO) ---
+with t3:
+    st.markdown("### TECHNIQUE VAULT")
+    search_query = st.text_input("SEARCH FOR A SPECIFIC DISH (e.g. Biryani, Burger, Tacos)")
     
-    if st.button("GENERATE RANDOM PROFILE"):
-        cuisine_list = ["Pakistani Biryani", "Mexican Enchiladas", "American Smash Burgers", "Indian Butter Chicken", "Asian Ramen"]
-        result = random.choice(cuisine_list)
+    if search_query:
         st.markdown(f"""
-        <div class="recipe-output" style="text-align:center;">
-            <p class="badge">SYSTEM CHOICE</p>
-            <h1 style="color:#fff;">{result}</h1>
+        <div class="recipe-card">
+            <h3>MASTERCLASS: {search_query.upper()}</h3>
+            <p style="color:#888;">Technical breakdown for {search_query} preparation.</p>
         </div>
         """, unsafe_allow_html=True)
+        # Pulls a general high-quality tutorial
+        st.video("https://www.youtube.com/watch?v=hKTN6Njxqxk")
 
-# --- TAB 4: GLOBAL ARCHIVE ---
-with tab4:
-    st.markdown("### GLOBAL CUISINE ARCHIVE")
-    st.write("Browse regional food categories.")
-    st.info("The archive includes Halal, Vegetarian, and Global variations for all 5 major regions.")
-    st.table({
-        "Region": ["Pakistani", "American", "Indian", "Asian", "Mexican"],
-        "Signature": ["Karahi", "Burgers", "Paneer", "Stir-fry", "Tacos"],
-        "Status": ["Halal Only", "Global", "Veg/Halal", "Global", "Halal Option"]
-    })
-
-# --- FOOTER ---
-st.markdown("<br><br><p style='text-align: center; color: #333; font-size: 0.7rem;'>AURA CHEF // GLOBAL ACCESS // 2026</p>", unsafe_allow_html=True)
+st.markdown("<br><br><p style='text-align:center; color:#333; font-size:0.7rem; letter-spacing:2px;'>AURA CHEF // GLOBAL HERITAGE TERMINAL // 2026</p>", unsafe_allow_html=True)
