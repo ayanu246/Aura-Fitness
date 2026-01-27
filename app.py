@@ -1,8 +1,9 @@
 import streamlit as st
 import datetime
+import time
 
-# --- AURA CHEF | THE ELITE MASTER v41.0 ---
-st.set_page_config(page_title="AURA CHEF | ELITE", page_icon="⚖️", layout="wide")
+# --- AURA CHEF | THE CACHE-BUSTER v42.0 ---
+st.set_page_config(page_title="AURA CHEF | 4K", page_icon="⚖️", layout="wide")
 
 st.markdown("""
 <style>
@@ -45,26 +46,25 @@ heritage_db = {
 t1, t2 = st.tabs(["MASTERCLASS PORTAL", "GLOBAL HERITAGE ARCHITECT"])
 
 with t1:
-    # FOOD OF THE DAY
     menu = {0: "Lamb Mandi Fusion", 1: "Wagyu Steak", 2: "Butter Chicken", 3: "Birria Tacos", 4: "Thai Curry", 5: "Nihari", 6: "Pasta"}
     featured = menu[datetime.datetime.now().weekday()]
     
     st.markdown(f"<h1 style='text-align: center; font-weight: 900;'>{featured.upper()}</h1>", unsafe_allow_html=True)
     c1, mid, c2 = st.columns([1, 4, 1])
     with mid:
-        # THE CULINARY FIX: Swapping Bunny for Direct Culinary MP4
-        # This is a high-speed professional searing/cooking video file.
-        culinary_url = "https://v.ftcdn.net/05/59/28/94/700_F_559289456_fO6t4jMvX6vX9N7S9oI7yX8H5W7zL9Pj_ST.mp4"
+        # THE CACHE-BUSTER: We add a unique ID (?t=...) to the URL so the browser 
+        # is forced to stop showing the bunny and load the food video.
+        culinary_url = f"https://v.ftcdn.net/05/59/28/94/700_F_559289456_fO6t4jMvX6vX9N7S9oI7yX8H5W7zL9Pj_ST.mp4?t={time.time()}"
         
         st.markdown(f"""
             <div class="video-frame">
                 <video width="100%" height="auto" controls autoplay muted loop playsinline>
                     <source src="{culinary_url}" type="video/mp4">
-                    Your browser is blocking the video element.
+                    UPDATING MEDIA STREAM...
                 </video>
             </div>
             <p style='text-align:center; color:#34d399; font-weight:bold; margin-top:15px;'>
-                DIRECT CULINARY FEED: ACTIVE // V41.0
+                ELITE CULINARY FEED: SYNCED // V42.0
             </p>
         """, unsafe_allow_html=True)
 
@@ -74,17 +74,16 @@ with t2:
     style = st.selectbox("SELECT HERITAGE", list(heritage_db.keys()))
     
     h = heritage_db[style]
-    st.markdown("**SEASONING PROTOCOL:**")
+    st.markdown("**CORE SEASONING:**")
     st.markdown("".join([f"<span class='spice-tag'>{s}</span>" for s in h['spices']]), unsafe_allow_html=True)
     
-    if st.button(f"GENERATE {h['steps']}-STEP {style.upper()} BLUEPRINT"):
+    if st.button(f"GENERATE FULL 30-STEP {style.upper()} PROTOCOL"):
         st.markdown("<div class='recipe-card'>", unsafe_allow_html=True)
-        st.write(f"**Primary Technique:** {h['focus']}")
-        st.write("---")
-        for i in range(1, h['steps'] + 1):
-            if i == 1: msg = f"Mise en place: Scale {dish} and arrange {len(h['spices'])} spices."
-            elif i == 15: msg = f"Technical Stage: Infusing {h['spices'][0]} into the fat medium."
-            elif i == 30: msg = f"Final Reveal: Garnish and serve the ultimate {style} {dish}."
-            else: msg = f"Technical Phase {i}: Monitoring aromatic development and thermal consistency."
-            st.markdown(f"<p><span class='step-num'>{i:02}</span> {msg}</p>", unsafe_allow_html=True)
+        for i in range(1, 31):
+            if i <= 5: stage = "MISE EN PLACE & THERMAL PREP"
+            elif i <= 15: stage = "MAILLARD SEAR & AROMATIC BLOOM"
+            elif i <= 25: stage = "THE BRAISE & FLAVOR EXTRACTION"
+            else: stage = "FINAL INFUSION & PRESENTATION"
+            
+            st.markdown(f"<p><span class='step-num'>{i:02}</span> <b>{stage}:</b> Technical phase execution for {dish}.</p>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
